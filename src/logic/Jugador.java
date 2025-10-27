@@ -56,7 +56,11 @@ public class Jugador implements java.io.Serializable {
     }
 
     public boolean compareTo(Jugador j) {
-        return this.getNombre().equals(j.getNombre());
+        boolean resultado = false;
+        if (this.getNombre().equals(j.getNombre())&& this.getPuntos() == j.getPuntos()&&this.ultimaPartida.compareTo(j.getUltimaPartida())==0) {
+            resultado = true;
+        }
+        return resultado;
     }
 
 }
