@@ -1,12 +1,20 @@
 package gui;
 
 import logic.BoggleBoard;
+import logic.Partida;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Locale;
 
+/**
+ * Panel de juego conectado con la lógica (Partida).
+ * - Muestra tablero a partir de partida.getTablero()
+ * - Valida palabras usando partida.enviarPalabra(...)
+ * - Muestra feedback y puntos de la partida actual
+ * - Resalta temporalmente las celdas usadas por una palabra válida
+ */
 public class GamePanel extends JPanel {
 
     public interface GameActions {
@@ -15,6 +23,8 @@ public class GamePanel extends JPanel {
     }
 
     private static final int DURACION_SEGUNDOS = 180;
+    private static final Color HIGHLIGHT_BG = new Color(255, 230, 153);
+    private static final Color DEFAULT_BG = new Color(240, 240, 240);
 
     private final JLabel lblJugador = new JLabel();
     private final JLabel lblTiempo = new JLabel("03:00");
@@ -26,16 +36,22 @@ public class GamePanel extends JPanel {
     private final JButton btnCancelar = new JButton("Cancelar");
     private final JButton btnFinalizar = new JButton("Finalizar");
 
-    private int segundosRestantes = DURACION_SEGUNDOS;
-    private int puntos = 0;
-    private Timer timer;
+    private final JLabel[][] cellLabels = new JLabel[4][4];
+    private Timer highlightTimer;
 
-    public GamePanel(String nombreJugador, char[][] tablero, GameActions actions, Icon relojArenaGif) {
+    private int segundosRestantes = DURACION_SEGUNDOS;
+    private Timer timer;
+    private final Partida partida;
+
+    public GamePanel(Partida partida, GameActions actions, Icon relojArenaGif) {
+        if (partida == null) throw new IllegalArgumentException("partida no puede ser null");
+        this.partida = partida;
+
         setLayout(new BorderLayout(10, 10));
 
         // Norte: jugador, tiempo, puntaje
         JPanel north = new JPanel(new BorderLayout());
-        lblJugador.setText("Jugador: " + nombreJugador);
+        lblJugador.setText("Jugador: " + partida.getNombreJugador());
         lblJugador.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         north.add(lblJugador, BorderLayout.WEST);
 
@@ -52,7 +68,7 @@ public class GamePanel extends JPanel {
 
         // Centro: tablero
         panelTablero.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        cargarTablero(tablero);
+        cargarTablero(partida.getTablero().getGrid());
         add(panelTablero, BorderLayout.CENTER);
 
         // Sur: entrada de palabras y feedback
@@ -74,8 +90,8 @@ public class GamePanel extends JPanel {
         add(input, BorderLayout.SOUTH);
 
         // Acciones
-        btnAgregar.addActionListener(this::agregarPalabraDemo);
-        txtPalabra.addActionListener(this::agregarPalabraDemo);
+        btnAgregar.addActionListener(this::agregarPalabra);
+        txtPalabra.addActionListener(this::agregarPalabra);
 
         btnCancelar.addActionListener(e -> {
             AudioManager.playClick();
@@ -93,8 +109,12 @@ public class GamePanel extends JPanel {
             finalizar(actions);
         });
 
-        // Timer 3 minutos
+        // Iniciar la partida y el timer
+        partida.iniciar();
         iniciarTimer();
+
+        // Inicializar puntos desde la partida (por si hay valores)
+        lblPuntos.setText("Puntos: " + partida.getPuntosTotales());
     }
 
     private void cargarTablero(char[][] grid) {
@@ -104,12 +124,16 @@ public class GamePanel extends JPanel {
             for (int c = 0; c < 4; c++) {
                 JLabel cell = new JLabel(String.valueOf(grid[r][c]).toUpperCase(Locale.ROOT), SwingConstants.CENTER);
                 cell.setOpaque(true);
-                cell.setBackground(new Color(240, 240, 240));
+                cell.setBackground(DEFAULT_BG);
                 cell.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
                 cell.setFont(f);
+                cell.setPreferredSize(new Dimension(64, 64));
                 panelTablero.add(cell);
+                cellLabels[r][c] = cell;
             }
         }
+        panelTablero.revalidate();
+        panelTablero.repaint();
     }
 
     private void iniciarTimer() {
@@ -134,56 +158,112 @@ public class GamePanel extends JPanel {
         lblTiempo.setText(String.format("%02d:%02d", m, s));
     }
 
-    // Modo demo: solo verifica longitud y suma puntos por longitud como referencia Boggle
-    private void agregarPalabraDemo(ActionEvent e) {
+    // Integración con Partida: enviar palabra y procesar ResultadoEnvio
+    private void agregarPalabra(ActionEvent e) {
         AudioManager.playClick();
-        String w = txtPalabra.getText().trim().toLowerCase(Locale.ROOT);
-        if (w.isEmpty()) return;
-
-        // Validaciones demo (luego se reemplaza por tu lógica Partida)
-        String feedback;
-        int puntosGanados = 0;
-        if (w.length() < 3) {
-            feedback = "Muy corta (>=3)";
-            lblFeedback.setForeground(new Color(160, 40, 40));
-        } else {
-            puntosGanados = puntuarPorLongitud(w.length());
-            puntos += puntosGanados;
-            lblPuntos.setText("Puntos: " + puntos);
-            feedback = "OK (+ " + puntosGanados + ")";
-            lblFeedback.setForeground(new Color(30, 90, 30));
-        }
-
-        lblFeedback.setText(feedback);
+        String raw = txtPalabra.getText();
+        if (raw == null) return;
         txtPalabra.setText("");
         txtPalabra.requestFocusInWindow();
+
+        Partida.ResultadoEnvio res;
+        try {
+            res = partida.enviarPalabra(raw);
+        } catch (IllegalStateException ex) {
+            lblFeedback.setText("La partida ya finalizó.");
+            lblFeedback.setForeground(new Color(160, 40, 40));
+            return;
+        } catch (Exception ex) {
+            lblFeedback.setText("Error validando palabra.");
+            lblFeedback.setForeground(new Color(160, 40, 40));
+            return;
+        }
+
+        switch (res.estado) {
+            case OK:
+                lblFeedback.setText(String.format("OK: %s (+%d)", res.normalizada, res.puntosGanados));
+                lblFeedback.setForeground(new Color(30, 90, 30));
+                // Obtener ruta y resaltar celdas
+                int[] ruta = partida.obtenerRutaPalabra(res.normalizada);
+                if (ruta != null) {
+                    highlightPath(ruta);
+                }
+                break;
+            case MUY_CORTA:
+                lblFeedback.setText("Muy corta");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+            case CARACTERES_INVALIDOS:
+                lblFeedback.setText("Caracteres inválidos");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+            case NO_FORMABLE_EN_TABLERO:
+                lblFeedback.setText("No se puede formar en el tablero");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+            case NO_EN_DICCIONARIO:
+                lblFeedback.setText("No está en el diccionario");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+            case REPETIDA:
+                lblFeedback.setText("Palabra repetida");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+            default:
+                lblFeedback.setText("Error");
+                lblFeedback.setForeground(new Color(160, 40, 40));
+                break;
+        }
+
+        // Actualizar puntos de la PARTIDA
+        lblPuntos.setText("Puntos: " + partida.getPuntosTotales());
     }
 
-    private int puntuarPorLongitud(int len) {
-        int puntos = 0;
-        switch (len) {
-            case 0:
-            case 1:
-            case 2:
-                puntos = 0; break;
-            case 3:
-            case 4:
-                puntos = 1; break;
-            case 5:
-                puntos = 2; break;
-            case 6:
-                puntos = 3; break;
-            case 7:
-                puntos = 5; break;
-            default:
-                if (len >= 8) puntos = 11;
+    // Resalta temporalmente las celdas indicadas (índices 0..15). Borra resaltados previos.
+    private void highlightPath(int[] ruta) {
+        // cancelar timer anterior si está activo y limpiar
+        if (highlightTimer != null && highlightTimer.isRunning()) {
+            highlightTimer.stop();
         }
-        return puntos;
+        clearHighlights();
+
+        // Pintar nuevo resaltado
+        for (int idx : ruta) {
+            if (idx < 0 || idx >= 16) continue;
+            int r = idx / BoggleBoard.COLS;
+            int c = idx % BoggleBoard.COLS;
+            JLabel cell = cellLabels[r][c];
+            cell.setBackground(HIGHLIGHT_BG);
+            cell.setBorder(BorderFactory.createLineBorder(new Color(200, 120, 0), 2));
+        }
+
+        // Programar limpieza en 1.2s
+        highlightTimer = new Timer(1200, ev -> {
+            clearHighlights();
+            highlightTimer.stop();
+        });
+        highlightTimer.setRepeats(false);
+        highlightTimer.start();
+    }
+
+    private void clearHighlights() {
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < 4; c++) {
+                JLabel cell = cellLabels[r][c];
+                if (cell != null) {
+                    cell.setBackground(DEFAULT_BG);
+                    cell.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+                }
+            }
+        }
     }
 
     private void finalizar(GameActions actions) {
         if (timer != null) timer.stop();
-        JOptionPane.showMessageDialog(this, "Tiempo finalizado.\nPuntuación: " + puntos, "Fin de partida", JOptionPane.INFORMATION_MESSAGE);
-        actions.onTerminarPartida(puntos);
+        btnAgregar.setEnabled(false);
+        txtPalabra.setEnabled(false);
+        int puntosPartida = partida.getPuntosTotales();
+        JOptionPane.showMessageDialog(this, "Tiempo finalizado.\nPuntuación de la partida: " + puntosPartida, "Fin de partida", JOptionPane.INFORMATION_MESSAGE);
+        actions.onTerminarPartida(puntosPartida);
     }
 }

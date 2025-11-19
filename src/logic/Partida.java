@@ -44,6 +44,7 @@ public class Partida {
     private final BoggleSolver solver;
     private final Dictionary diccionario;
     private final GameWordValidator validador;
+
     private final Set<String> palabrasAceptadas = new LinkedHashSet<>();
     private int puntosTotales = 0;
     private long inicioMillis = 0;
@@ -108,6 +109,15 @@ public class Partida {
     }
 
     /**
+     * Devuelve la ruta (índices 0..15) que forma la palabra normalizada en el tablero,
+     * o null si no se puede formar. Útil para la UI.
+     */
+    public int[] obtenerRutaPalabra(String palabraNormalizada) {
+        if (palabraNormalizada == null) return null;
+        return solver.pathForWord(palabraNormalizada);
+    }
+
+    /**
      * Calcula la puntuación según la longitud de la palabra, usando switch-case y una sola variable.
      */
     private int puntuarPalabra(String palabra) {
@@ -166,5 +176,13 @@ public class Partida {
 
     public boolean estaFinalizada() {
         return finalizada;
+    }
+
+    public long getInicioMillis() {
+        return inicioMillis;
+    }
+
+    public long getFinMillis() {
+        return finMillis;
     }
 }

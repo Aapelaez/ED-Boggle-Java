@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.function.Predicate;
 
+
 public class BoggleSolver {
     private final LinkedGraph graph;
     private final char[] letters;     // letras por índice 0..15
@@ -34,16 +35,16 @@ public class BoggleSolver {
 
     private static int[][] extractNeighbors(LinkedGraph g) {
         int n = BoggleBoard.ROWS * BoggleBoard.COLS; // 16
-        int[][] adj = new int[n][];
+        int[][] res = new int[n][];
         for (int i = 0; i < n; i++) {
             LinkedList<Vertex> vs = g.adjacentsG(i);
             int[] idxs = new int[vs.size()];
             for (int k = 0; k < vs.size(); k++) {
                 idxs[k] = g.getVertexIndex(vs.get(k));
             }
-            adj[i] = idxs;
+            res[i] = idxs;
         }
-        return adj;
+        return res;
     }
 
     // Valida una palabra normalizada (minúsculas, sin tildes, solo a–z) en el tablero
@@ -83,13 +84,56 @@ public class BoggleSolver {
         return false;
     }
 
-    // Encuentra todas las palabras del tablero usando el diccionario con poda por prefijo
-    public Set<String> findAllWords(Dictionary dict, int minLen) {
-        return findAllWords(dict, minLen, w -> true);
+    /**
+     * Devuelve la ruta (array de índices 0..15) que forma la palabra dada en el tablero,
+     * o null si no se puede formar. El array tiene longitud = palabra.length().
+     *
+     * Nota: la palabra debe estar normalizada como usa el resto del proyecto.
+     */
+    public int[] pathForWord(String word) {
+        if (word == null) return null;
+        int len = word.length();
+        if (len < 1) return null;
+
+        boolean[] visited = new boolean[letters.length];
+        int[] path = new int[len];
+
+        char first = word.charAt(0);
+        for (int i = 0; i < letters.length; i++) {
+            if (letters[i] == first) {
+                Arrays.fill(visited, false);
+                if (dfsPath(i, word, 0, visited, path)) {
+                    return path;
+                }
+            }
+        }
+        return null;
+    }
+
+    // DFS que construye la ruta en el array 'path'. Retorna true si encontró la palabra.
+    private boolean dfsPath(int idx, String word, int pos, boolean[] visited, int[] path) {
+        if (letters[idx] != word.charAt(pos)) return false;
+        path[pos] = idx;
+        if (pos == word.length() - 1) {
+            return true;
+        }
+        visited[idx] = true;
+        int nextPos = pos + 1;
+        char nextChar = word.charAt(nextPos);
+        for (int nb : neighbors[idx]) {
+            if (!visited[nb] && letters[nb] == nextChar) {
+                if (dfsPath(nb, word, nextPos, visited, path)) {
+                    visited[idx] = false;
+                    return true;
+                }
+            }
+        }
+        visited[idx] = false;
+        return false;
     }
 
     // Variante con filtro para listado (reduce ruido visual sin afectar validación de usuario)
-    public Set<String> findAllWords(Dictionary dict, int minLen, Predicate<String> accept) {
+    public Set<String> findAllWords(Dictionary dict, int minLen, java.util.function.Predicate<String> accept) {
         Set<String> results = new HashSet<>();
         boolean[] visited = new boolean[letters.length];
         StringBuilder sb = new StringBuilder(16);
@@ -102,7 +146,7 @@ public class BoggleSolver {
     }
 
     private void dfsEnumerate(int idx, Dictionary dict, int minLen, boolean[] visited, StringBuilder sb,
-                              Set<String> out, Predicate<String> accept) {
+                              Set<String> out, java.util.function.Predicate<String> accept) {
         visited[idx] = true;
         sb.append(letters[idx]);
         String cur = sb.toString();

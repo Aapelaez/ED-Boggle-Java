@@ -14,7 +14,7 @@ public class GameWordValidator {
     public enum Result {
         OK,
         TOO_SHORT,
-        INVALID_CHARACTERS, // incluye 'ñ' o caracteres que se eliminan
+        INVALID_CHARACTERS, // incluye 'ñ' o caracteres que no sean letras
         NOT_FORMABLE_ON_BOARD,
         NOT_IN_DICTIONARY
     }
@@ -47,16 +47,31 @@ public class GameWordValidator {
             return new Validation(Result.INVALID_CHARACTERS, "");
         }
 
+        // Si solo tiene espacios o está vacío -> caracteres inválidos
+        if (rawInput.trim().isEmpty()) {
+            return new Validation(Result.INVALID_CHARACTERS, "");
+        }
+
+        // Si contiene cualquier carácter que no sea letra (por ejemplo dígitos, signos de puntuación)
+        // consideramos inválido. Permitimos espacios (aunque los rechazamos arriba si solo hay espacios).
+        for (int i = 0; i < rawInput.length(); i++) {
+            char ch = rawInput.charAt(i);
+            if (Character.isWhitespace(ch)) continue; // espacios son tolerados (se quitan al normalizar)
+            if (!Character.isLetter(ch)) {
+                return new Validation(Result.INVALID_CHARACTERS, "");
+            }
+        }
+
         // Normaliza: minusculas, sin tildes, solo [a-z]
         String norm = TextNormalizer.normalize(rawInput);
-
-        if (norm.length() < 3) {
-            return new Validation(Result.TOO_SHORT, norm);
-        }
 
         // Por seguridad, si tras normalizar se perdió todo
         if (norm.isEmpty()) {
             return new Validation(Result.INVALID_CHARACTERS, "");
+        }
+
+        if (norm.length() < 3) {
+            return new Validation(Result.TOO_SHORT, norm);
         }
 
         // 1) Verificar que se puede formar en el tablero

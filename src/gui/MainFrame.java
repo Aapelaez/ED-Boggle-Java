@@ -1,8 +1,12 @@
 package gui;
 
 import logic.BoggleBoard;
+import logic.Dictionary;
 import logic.Jugador;
+import logic.Partida;
+import logic.TrieDictionary;
 import logic.Scoreboard;
+import utils.DictionaryLoader;
 import utils.TrabajarFichero;
 
 import javax.swing.*;
@@ -10,6 +14,13 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 
+/**
+ * Ventana principal de la aplicación Swing.
+ * - Maneja el flujo de registro/selección de usuario.
+ * - Carga el diccionario (una sola vez).
+ * - Crea Partida y la pasa al GamePanel.
+ * - Muestra el Scoreboard.
+ */
 public class MainFrame extends JFrame {
 
     private final CardLayout cards = new CardLayout();
@@ -22,6 +33,9 @@ public class MainFrame extends JFrame {
     // Fichero de datos y jugador en uso
     private final File datosFile = new File("game_files/datos_partidas.dat");
     private Jugador jugadorActual;
+
+    // Diccionario compartido (cargar una vez)
+    private Dictionary dict;
 
     public MainFrame() {
         super("Boggle");
@@ -191,31 +205,68 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void arrancarPartidaConNuevoTablero() {
-        if (jugadorActual == null) return;
-        BoggleBoard board = new BoggleBoard();
-        char[][] grid = board.getGrid();
-        mostrarJuego(jugadorActual.getNombre(), grid);
+    /**
+     * Carga el diccionario si aún no está cargado. La carga se realiza en un hilo
+     * y se muestra un diálogo modal "Cargando diccionario..." mientras dura.
+     */
+    private void asegurarseDiccionarioCargado() throws Exception {
+        if (dict != null) return;
+        // Mensaje simple mientras carga (la carga puede tardar)
+        final JOptionPane pane = new JOptionPane("Cargando diccionario... espera", JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{}, null);
+        final JDialog dialog = pane.createDialog(this, "Cargando");
+        dialog.setModal(true);
+
+        Exception loadEx[] = new Exception[1];
+
+        Thread loader = new Thread(() -> {
+            try {
+                dict = new TrieDictionary();
+                DictionaryLoader.loadIntoDictionary("game_files/diccionario.txt", dict);
+            } catch (Exception ex) {
+                loadEx[0] = ex;
+            } finally {
+                // close dialog on EDT
+                SwingUtilities.invokeLater(dialog::dispose);
+            }
+        }, "DictLoader");
+        loader.start();
+        dialog.setVisible(true); // bloquea hasta que loader llama a dispose()
+
+        if (loadEx[0] != null) throw loadEx[0];
     }
 
-    private void mostrarJuego(String nombre, char[][] grid) {
+    private void arrancarPartidaConNuevoTablero() {
+        if (jugadorActual == null) return;
+        try {
+            asegurarseDiccionarioCargado();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo cargar el diccionario:\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        BoggleBoard board = new BoggleBoard();
+        Partida partida = new Partida(jugadorActual.getNombre(), board, dict);
+        mostrarJuego(partida);
+    }
+
+    private void mostrarJuego(Partida partida) {
         Icon reloj = null;
         // Si tienes un GIF de reloj de arena, habilítalo:
         // reloj = new ImageIcon("game_files/hourglass.gif");
 
-        gamePanel = new GamePanel(nombre, grid, new GamePanel.GameActions() {
+        gamePanel = new GamePanel(partida, new GamePanel.GameActions() {
             @Override
             public void onTerminarPartida(int puntajeFinal) {
-                // ACTUALIZAR Y GUARDAR EL JUGADOR
+                // ACTUALIZAR Y GUARDAR EL JUGADOR usando sólo los puntos de LA PARTIDA
                 try {
                     if (jugadorActual != null) {
-                        jugadorActual.actualizarUltimaPartida(puntajeFinal);
+                        jugadorActual.actualizarUltimaPartida(puntajeFinal); // actualiza puntos acumulados y fecha
                         // Persistir cambios
                         TrabajarFichero.actualizarJugador(datosFile, jugadorActual);
                         JOptionPane.showMessageDialog(MainFrame.this,
-                                "Puntuación guardada.\n" +
+                                "Puntuación de la partida guardada.\n" +
                                         "Jugador: " + jugadorActual.getNombre() + "\n" +
-                                        "Puntos totales: " + jugadorActual.getPuntos(),
+                                        "Puntos Totales: " + jugadorActual.getPuntos(),
                                 "Fin de partida", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } catch (Exception ex) {
