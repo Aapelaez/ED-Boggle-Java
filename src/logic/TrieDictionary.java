@@ -18,8 +18,11 @@ public class TrieDictionary implements Dictionary {
     private int wordCount = 0;
 
     public TrieDictionary() {
-        this.tree = new GeneralTree<>(new TrieValue('\0', false));
-        this.root = tree.getNodeRoot();
+        // La nueva versión de GeneralTree ya no tiene constructor que acepte directamente
+        // un valor; pide un BinaryTreeNode. Creamos el nodo raíz y lo pasamos.
+        BinaryTreeNode<TrieValue> rootNode = new BinaryTreeNode<>(new TrieValue('\0', false));
+        this.tree = new GeneralTree<>(rootNode);
+        this.root = rootNode;
     }
 
     @Override
