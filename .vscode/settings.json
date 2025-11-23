@@ -1,0 +1,9 @@
+{
+    "java.project.sourcePaths": [
+        "src"
+    ],
+    "java.project.referencedLibraries": [
+        "src\\libs\\LinkedGraph_1.0.jar",
+        "src\\libs\\tree-library-3.0.2.jar"
+    ]
+}
