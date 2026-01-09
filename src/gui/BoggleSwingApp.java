@@ -1,5 +1,9 @@
 package gui;
 
+import gui.frames.MainFrame;
+import sound.AudioManager;
+import sound.BackgroundMusic;
+
 import javax.swing.*;
 
 public class BoggleSwingApp {
@@ -7,14 +11,23 @@ public class BoggleSwingApp {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
 
-            // Configura la ruta si usas otra y precarga
-            AudioManager.setClickPath("game_files/click.wav");
-            AudioManager.preloadClick();
+                // Cargar configuración
+                BackgroundMusic.cargarConfiguracionAudio();
+                AudioManager.setClickPath("game_files/click.wav");
+                AudioManager.preloadClick();
 
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+                // Crear ventana principal
+                MainFrame frame = new MainFrame();
+                frame.setVisible(true);
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null,
+                        "Error al iniciar la aplicación:\n" + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
         });
     }
 }

@@ -1,7 +1,7 @@
 package logic;
 
 import cu.edu.cujae.ceis.graph.LinkedGraph;
-import utils.TextNormalizer;
+import sound.BackgroundMusic;
 
 import java.util.*;
 
@@ -66,6 +66,7 @@ public class Partida {
     }
 
     public void iniciar() {
+        BackgroundMusic.playSuspense();
         if (!iniciada) {
             this.inicioMillis = System.currentTimeMillis();
             this.iniciada = true;

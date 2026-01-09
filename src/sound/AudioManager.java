@@ -1,4 +1,4 @@
-package gui;
+package sound;
 
 import javax.sound.sampled.*;
 import java.awt.*;
@@ -11,6 +11,7 @@ public final class AudioManager {
     private static String clickPath = "game_files/click.wav";
     private static Clip clickClip;
     private static boolean preloaded = false;
+    private static float volumenGlobal = 1.0f;
 
     private AudioManager() {}
 
@@ -92,7 +93,7 @@ public final class AudioManager {
     }
 
     public static void playClick() {
-        if (!enabled) return;
+        if (!enabled || volumenGlobal <= 0.01f) return;
 
         if (!preloaded) {
             preloadClick();
@@ -104,6 +105,14 @@ public final class AudioManager {
                     clickClip.stop();
                 }
                 clickClip.setFramePosition(0);
+
+                // Aplicar control de volumen si está disponible
+                if (clickClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl gainControl = (FloatControl) clickClip.getControl(FloatControl.Type.MASTER_GAIN);
+                    float dB = (float) (Math.log(volumenGlobal) / Math.log(10.0) * 20.0);
+                    gainControl.setValue(dB);
+                }
+
                 clickClip.start();
                 return;
             } catch (Exception e) {
@@ -111,7 +120,7 @@ public final class AudioManager {
             }
         }
 
-        // Fallback mínimo para no dejar el clic “mudo”
+        // Fallback mínimo para no dejar el clic "mudo"
         Toolkit.getDefaultToolkit().beep();
     }
 
@@ -127,4 +136,13 @@ public final class AudioManager {
             clickClip = null;
         }
     }
+
+    public static void setVolumen(float volumen) {
+        volumenGlobal = Math.max(0.0f, Math.min(1.0f, volumen));
+    }
+
+    public static float getVolumen() {
+        return volumenGlobal;
+    }
+
 }

@@ -1,11 +1,10 @@
-package gui;
+package gui.panels;
 
+import gui.gui_logic.controllers.ScoreboardController;
 import logic.Jugador;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 public class ScoreboardPanel extends JPanel {
@@ -18,9 +17,14 @@ public class ScoreboardPanel extends JPanel {
     private final JList<String> lista = new JList<>(modelo);
     private final JButton btnVolver = new JButton("Volver");
 
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private ScoreboardController controller;
 
     public ScoreboardPanel(ScoreActions actions) {
+        this.controller = new ScoreboardController(this, actions);
+        initUI();
+    }
+
+    private void initUI() {
         setLayout(new BorderLayout(10, 10));
 
         JLabel titulo = new JLabel("Top 10", SwingConstants.CENTER);
@@ -33,34 +37,21 @@ public class ScoreboardPanel extends JPanel {
         south.add(btnVolver);
         add(south, BorderLayout.SOUTH);
 
-        btnVolver.addActionListener(e -> {
-            AudioManager.playClick();
-            actions.onVolverMenu();
-        });
+        btnVolver.addActionListener(e -> controller.onVolverMenu());
     }
 
     // Mostrar lista real de jugadores
     public void setJugadores(List<Jugador> jugadores) {
-        modelo.clear();
-        int pos = 1;
-        for (Jugador j : jugadores) {
-            String fecha = formatFecha(j.getUltimaPartida());
-            String linea = String.format("%2d. %s - %d pts  (última: %s)",
-                    pos++, j.getNombre(), j.getPuntos(), fecha);
-            modelo.addElement(linea);
-        }
-        if (modelo.isEmpty()) {
-            modelo.addElement("No hay jugadores registrados todavía.");
-        }
+        controller.setJugadores(jugadores);
     }
 
-    // Mostrar un único mensaje (por ejemplo, errores o “sin datos”)
+    // Mostrar un único mensaje (por ejemplo, errores o "sin datos")
     public void setMensaje(String msg) {
-        modelo.clear();
-        modelo.addElement(msg);
+        controller.setMensaje(msg);
     }
 
-    private String formatFecha(Date d) {
-        return d == null ? "-" : sdf.format(d);
+    // Getter para el modelo (necesario para el controlador)
+    public DefaultListModel<String> getModelo() {
+        return modelo;
     }
 }

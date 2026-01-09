@@ -16,7 +16,7 @@ public class Jugador implements java.io.Serializable {
         setPartidasJugadas(0);
     }
 
-    private void setNombre(String nombre) {
+    public void setNombre(String nombre) {
         this.nombre = nombre;
     }
 
@@ -28,20 +28,21 @@ public class Jugador implements java.io.Serializable {
         return puntos;
     }
 
-    private void setPartidasJugadas(int partidasJugadas) {
+    public void setPartidasJugadas(int partidasJugadas) {
         this.partidasJugadas = partidasJugadas;
     }
     public int getPartidasJugadas() {
         return partidasJugadas;
     }
 
-    private void setPuntos(int puntos) {
+    public void setPuntos(int puntos) {
         this.puntos = puntos;
     }
 
-    private void actualizarPuntos(int puntos){
+    public void actualizarPuntos(int puntos){
         setPuntos(getPuntos()+puntos);
     }
+
     public Date getUltimaPartida() {
         return ultimaPartida;
     }
@@ -51,7 +52,7 @@ public class Jugador implements java.io.Serializable {
         actualizarPartidasJugadas();
     }
 
-    private void actualizarPartidasJugadas() {
+    public void actualizarPartidasJugadas() {
         this.partidasJugadas++;
     }
 
@@ -61,6 +62,12 @@ public class Jugador implements java.io.Serializable {
             resultado = true;
         }
         return resultado;
+    }
+
+    public void actualizarDesdeTorneo(int puntosGanados) {
+        actualizarPuntos(puntosGanados);
+        actualizarPartidasJugadas();
+        this.ultimaPartida = new Date();
     }
 
 }
