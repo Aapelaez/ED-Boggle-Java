@@ -7,7 +7,7 @@ import sound.BackgroundMusic;
 import javax.swing.*;
 
 public class BoggleSwingApp {
-    public static void main(String[] args) {
+    public static void iniciarInterfaz(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

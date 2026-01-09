@@ -1,11 +1,24 @@
-import cu.edu.cujae.ceis.graph.LinkedGraph;
-import logic.*;
-import utils.DictionaryLoader;
+import gui.BoggleSwingApp;
 
-import java.io.IOException;
-import java.util.Set;
-
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
+    private static Main instance;
 
+
+    private Main() {}
+
+    public static Main getInstance() {
+        if (instance == null) {
+            instance = new Main();
+        }
+        return instance;
+    }
+
+    public void run(String[] args) {
+        BoggleSwingApp.iniciarInterfaz(args);
+    }
+
+    public static void main(String[] args) {
+        Main app = Main.getInstance();
+        app.run(args);
+    }
 }

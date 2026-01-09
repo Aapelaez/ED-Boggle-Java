@@ -2,7 +2,7 @@ package gui.gui_logic.controllers;
 
 import sound.AudioManager;
 import gui.panels.GamePanel;
-import logic.BoggleBoard;
+import logic.TableroBoggle;
 import logic.Partida;
 
 import javax.swing.*;
@@ -112,8 +112,8 @@ public class GameController {
 
         for (int idx : ruta) {
             if (idx < 0 || idx >= 16) continue;
-            int r = idx / BoggleBoard.COLS;
-            int c = idx % BoggleBoard.COLS;
+            int r = idx / TableroBoggle.COLS;
+            int c = idx % TableroBoggle.COLS;
             view.highlightCell(r, c, HIGHLIGHT_BG);
         }
 

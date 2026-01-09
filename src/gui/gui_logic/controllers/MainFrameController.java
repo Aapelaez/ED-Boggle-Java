@@ -5,15 +5,15 @@ import sound.BackgroundMusic;
 import gui.frames.MainFrame;
 import gui.panels.GamePanel;
 import gui.panels.OptionsPanel;
-import logic.BoggleBoard;
-import logic.Dictionary;
+import logic.TableroBoggle;
+import logic.Diccionario;
 import logic.Jugador;
 import logic.Partida;
 import logic.Torneo;
 import logic.JugadorTorneo;
 import logic.GestorTorneos;
 import logic.TorneoUtils;
-import logic.TrieDictionary;
+import logic.ArbolPrefijos;
 import utils.DictionaryLoader;
 import utils.TrabajarFichero;
 
@@ -33,7 +33,7 @@ public class MainFrameController {
     private final MainFrame view;
     private final File datosFile;
     private Jugador jugadorActual;
-    private Dictionary dict;
+    private Diccionario dict;
     private boolean pantallaCompletaActiva = false;
 
     private static final String PREF_JUGADOR_ACTUAL = "jugador_actual";
@@ -218,7 +218,7 @@ public class MainFrameController {
 
         Thread loader = new Thread(() -> {
             try {
-                dict = new TrieDictionary();
+                dict = new ArbolPrefijos();
                 DictionaryLoader.loadIntoDictionary("game_files/diccionario.txt", dict);
             } catch (Exception ex) {
                 loadEx[0] = ex;
@@ -243,7 +243,7 @@ public class MainFrameController {
         }
 
         BackgroundMusic.playSuspense();
-        BoggleBoard board = new BoggleBoard();
+        TableroBoggle board = new TableroBoggle();
         Partida partida = new Partida(jugadorActual.getNombre(), board, dict);
         view.mostrarJuego(partida);
     }

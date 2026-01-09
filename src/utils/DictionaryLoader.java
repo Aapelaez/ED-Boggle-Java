@@ -1,6 +1,6 @@
 package utils;
 
-import logic.Dictionary;
+import logic.Diccionario;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -10,13 +10,13 @@ import java.util.*;
 public final class DictionaryLoader {
     private DictionaryLoader() {}
 
-    public static void loadIntoDictionary(String resourcePath, Dictionary dict) throws IOException {
+    public static void loadIntoDictionary(String resourcePath, Diccionario dict) throws IOException {
         loadWithOptions(resourcePath, dict, true, true, true, false); // requireVowel=false por defecto
     }
 
     public static void loadWithOptions(
             String resourcePath,
-            Dictionary dict,
+            Diccionario dict,
             boolean excludeAllCapsTokens,
             boolean excludeProperNouns,
             boolean excludePunctuatedTokens,
@@ -61,7 +61,7 @@ public final class DictionaryLoader {
         );
     }
 
-    private static void insertBalanced(Dictionary dict, List<String> words, int lo, int hi) {
+    private static void insertBalanced(Diccionario dict, List<String> words, int lo, int hi) {
         if (lo > hi) return;
         int mid = (lo + hi) >>> 1;
         String w = words.get(mid);

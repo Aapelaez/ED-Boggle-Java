@@ -23,8 +23,8 @@ public class OptionsPanel extends JPanel {
     private final JToggleButton btnMusica = new JToggleButton("Música: ON");
     private final JToggleButton btnPantallaCompleta = new JToggleButton("Pantalla Completa: OFF");
 
-    private final JSlider sliderVolumenMusica = new JSlider(0, 100, 80);
-    private final JSlider sliderVolumenSonidos = new JSlider(0, 100, 80);
+    private final JSlider sliderVolumenMusica = new JSlider(0, 100, 60);
+    private final JSlider sliderVolumenSonidos = new JSlider(0, 100, 75);
 
     private OptionsController controller;
 
@@ -49,7 +49,7 @@ public class OptionsPanel extends JPanel {
         JPanel panelAudio = crearPanelControl("Sonidos del Juego:", btnAudio, sliderVolumenSonidos);
         JPanel panelMusica = crearPanelControl("Música de Fondo:", btnMusica, sliderVolumenMusica);
 
-        JPanel panelPantalla = new JPanel(new BorderLayout(10, 10));
+        JPanel panelPantalla = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         panelPantalla.add(new JLabel("Pantalla Completa:"), BorderLayout.WEST);
         panelPantalla.add(btnPantallaCompleta, BorderLayout.CENTER);
 
@@ -99,11 +99,15 @@ public class OptionsPanel extends JPanel {
         });
 
         sliderVolumenMusica.addChangeListener(e -> {
-            controller.onAjustarVolumenMusica(sliderVolumenMusica.getValue());
+            if (!sliderVolumenMusica.getValueIsAdjusting()) {
+                controller.onAjustarVolumenMusica(sliderVolumenMusica.getValue());
+            }
         });
 
         sliderVolumenSonidos.addChangeListener(e -> {
-            controller.onAjustarVolumenSonidos(sliderVolumenSonidos.getValue());
+            if (!sliderVolumenSonidos.getValueIsAdjusting()) {
+                controller.onAjustarVolumenSonidos(sliderVolumenSonidos.getValue());
+            }
         });
 
         controller.actualizarEstadoAudio();

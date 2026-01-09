@@ -1,9 +1,9 @@
 package gui.gui_logic.managers;
 
 import gui.frames.MainFrame;
-import logic.Dictionary;
+import logic.Diccionario;
 import logic.Partida;
-import logic.TrieDictionary;
+import logic.ArbolPrefijos;
 import utils.DictionaryLoader;
 
 import java.io.InputStream;
@@ -67,8 +67,8 @@ public class NavigationManager {
     }
 
     // Método auxiliar para crear diccionario
-    public static Dictionary crearDiccionario() {
-        TrieDictionary diccionario = new TrieDictionary();
+    public static Diccionario crearDiccionario() {
+        ArbolPrefijos diccionario = new ArbolPrefijos();
 
         String[] posiblesRutas = {
                 "diccionario.txt",

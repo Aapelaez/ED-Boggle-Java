@@ -39,11 +39,11 @@ public class Partida {
     }
 
     private final String nombreJugador;
-    private final BoggleBoard tablero;
+    private final TableroBoggle tablero;
     private final LinkedGraph grafo;
-    private final BoggleSolver solver;
-    private final Dictionary diccionario;
-    private final GameWordValidator validador;
+    private final SolucionadorBoggle solver;
+    private final Diccionario diccionario;
+    private final ValidadorPalabras validador;
 
     private final Set<String> palabrasAceptadas = new LinkedHashSet<>();
     private int puntosTotales = 0;
@@ -52,17 +52,17 @@ public class Partida {
     private boolean iniciada = false;
     private boolean finalizada = false;
 
-    public Partida(String nombreJugador, BoggleBoard tablero, Dictionary diccionario) {
+    public Partida(String nombreJugador, TableroBoggle tablero, Diccionario diccionario) {
         if (nombreJugador == null || nombreJugador.trim().isEmpty()) throw new IllegalArgumentException("Nombre de jugador inválido");
         if (diccionario == null) throw new IllegalArgumentException("El diccionario no puede ser null");
 
         this.nombreJugador = nombreJugador.trim();
-        this.tablero = tablero != null ? tablero : new BoggleBoard();
+        this.tablero = tablero != null ? tablero : new TableroBoggle();
         this.diccionario = diccionario;
 
         this.grafo = BoggleGraphBuilder.build(this.tablero);
-        this.solver = new BoggleSolver(this.grafo);
-        this.validador = new GameWordValidator(this.solver, this.diccionario);
+        this.solver = new SolucionadorBoggle(this.grafo);
+        this.validador = new ValidadorPalabras(this.solver, this.diccionario);
     }
 
     public void iniciar() {
@@ -84,7 +84,7 @@ public class Partida {
         }
         if (palabraIngresada == null) return new ResultadoEnvio(EstadoValidacionPalabra.CARACTERES_INVALIDOS, "", 0);
 
-        GameWordValidator.Validation v = validador.validateUserWord(palabraIngresada);
+        ValidadorPalabras.Validation v = validador.validateUserWord(palabraIngresada);
 
         switch (v.result) {
             case TOO_SHORT:
@@ -167,7 +167,7 @@ public class Partida {
         return new ArrayList<>(palabrasAceptadas);
     }
 
-    public BoggleBoard getTablero() {
+    public TableroBoggle getTablero() {
         return tablero;
     }
 

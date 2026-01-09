@@ -13,11 +13,11 @@ public class Torneo {
     private final String nombre;
     private final List<JugadorTorneo> jugadores;
     private final List<Partida> partidas;
-    private final Dictionary diccionario;
+    private final Diccionario diccionario;
     private boolean iniciado = false;
     private boolean finalizado = false;
 
-    public Torneo(String nombre, Dictionary diccionario) {
+    public Torneo(String nombre, Diccionario diccionario) {
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del torneo no puede estar vacío");
         }
@@ -66,7 +66,7 @@ public class Torneo {
 
         // Crear un tablero DIFERENTE para cada jugador
         for (JugadorTorneo jugador : jugadores) {
-            BoggleBoard tablero = new BoggleBoard(); // Cada jugador tiene su propio tablero
+            TableroBoggle tablero = new TableroBoggle(); // Cada jugador tiene su propio tablero
             Partida partida = new Partida(jugador.getNombre(), tablero, diccionario);
             partidas.add(partida);
             partida.iniciar();

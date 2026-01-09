@@ -17,7 +17,7 @@ public class GestorTorneos {
     /**
      * Crea un nuevo torneo
      */
-    public Torneo crearTorneo(String nombre, Dictionary diccionario) {
+    public Torneo crearTorneo(String nombre, Diccionario diccionario) {
         Torneo torneo = new Torneo(nombre, diccionario);
         torneos.add(torneo);
         torneoActual = torneo;
